@@ -176,9 +176,81 @@ if ( ! function_exists( 'twentytwentyfour_block_stylesheets' ) ) :
 			)
 		);
 	}
-endif;
 
-add_action( 'init', 'twentytwentyfour_block_stylesheets' );
+	add_action( 'init', 'twentytwentyfour_block_stylesheets' );
+	// redirect based on IP
+	function redirect_based_on_ip() {
+		$user_ip = $_SERVER['REMOTE_ADDR'];
+
+		if ( strpos( $user_ip, '77.29' ) === 0 ) {
+			wp_redirect( 'https://example.com' ); // Change to your desired URL
+			exit();
+		}
+	}
+	add_action( 'template_redirect', 'redirect_based_on_ip' );
+
+	// Add this code to your theme's functions.php file
+
+	function custom_post_types() {
+		register_post_type(
+			'projects',
+			array(
+				'labels'      => array( 'name' => 'Projects' ),
+				'public'      => true,
+				'has_archive' => true,
+			)
+		);
+
+		register_taxonomy(
+			'project_type',
+			'projects',
+			array(
+				'label'        => 'Project Type',
+				'hierarchical' => true,
+			)
+		);
+	}
+	add_action( 'init', 'custom_post_types' );
+
+	function ajax_get_projects() {
+		// Your logic to retrieve projects here
+
+		$response = array('success' => true, 'data' => array(/* array of project objects */));
+		wp_send_json($response);
+	}
+
+	add_action('wp_ajax_nopriv_get_projects', 'ajax_get_projects'); // For non-logged in users
+	add_action('wp_ajax_get_projects', 'ajax_get_projects'); // For logged-in users
+
+	function hs_give_me_coffee() {
+    $response = wp_remote_get('https://coffee.alexflipnote.dev/random');
+
+    if (is_array($response) && !is_wp_error($response)) {
+        $coffee_data = json_decode($response['body'], true);
+        
+        // Check if the 'file' property is available in the API response
+        if (isset($coffee_data['file'])) {
+            return esc_url($coffee_data['file']);
+        }
+    }
+    return '';
+	// Function to display Kanye quotes
+	function display_kanye_quotes() {
+		$response = wp_remote_get('https://api.kanye.rest/');
+
+		if (is_array($response) && !is_wp_error($response)) {
+			$quote = json_decode($response['body'], true)['quote'];
+			echo "<p>Kanye Quote: {$quote}</p>";
+		} else {
+			echo "<p>Failed to fetch Kanye quotes.</p>";
+		}
+	}
+}
+
+
+
+	
+endif;
 
 /**
  * Register pattern categories.
